@@ -32,6 +32,7 @@ async function run() {
 
     const classesCollection = client.db("martialDb").collection("classes");
     const instructorsCollection = client.db("martialDb").collection("instructors");
+    const seatsCollection = client.db("martialDb").collection("seats");
 
 
     app.get('/classes', async(req, res) => {
@@ -40,6 +41,13 @@ async function run() {
     })
     app.get('/instructors', async(req, res) => {
         const result = await instructorsCollection.find().toArray();
+        res.send(result)
+    })
+
+    // seats collection
+    app.post('/seats', async(req, res) => {
+        const item = req.body;
+        const result = await seatsCollection.insertOne(item);
         res.send(result)
     })
 
