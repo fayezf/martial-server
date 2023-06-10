@@ -18,63 +18,81 @@ const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
-  serverApi: {
-    version: ServerApiVersion.v1,
-    strict: true,
-    deprecationErrors: true,
-  }
+    serverApi: {
+        version: ServerApiVersion.v1,
+        strict: true,
+        deprecationErrors: true,
+    }
 });
 
 async function run() {
-  try {
-    // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    try {
+        // Connect the client to the server	(optional starting in v4.7)
+        await client.connect();
 
-    const classesCollection = client.db("martialDb").collection("classes");
-    const instructorsCollection = client.db("martialDb").collection("instructors");
-    const seatsCollection = client.db("martialDb").collection("seats");
+        const usersCollection = client.db("martialDb").collection("users");
+        const classesCollection = client.db("martialDb").collection("classes");
+        const instructorsCollection = client.db("martialDb").collection("instructors");
+        const seatsCollection = client.db("martialDb").collection("seats");
+
+        // users related apis
+        app.post('/users', async (req, res) => {
+            const user = req.body;
+            const query = { email: user.email };
+            const existingUser = await usersCollection.findOne(query);
+            if (existingUser) {
+                return res.send({ message: 'user already exists' })
+            }
+            const result = await usersCollection.insertOne(user);
+            res.send(result)
+        })
 
 
-    app.get('/classes', async(req, res) => {
-        const result = await classesCollection.find().toArray();
-        res.send(result)
-    })
-    app.get('/instructors', async(req, res) => {
-        const result = await instructorsCollection.find().toArray();
-        res.send(result)
-    })
+        // classes related apis
+        app.get('/classes', async (req, res) => {
+            const result = await classesCollection.find().toArray();
+            res.send(result)
+        })
 
-    // seats collection apis
-    app.get('/seats', async(req, res) => {
-        const email = req.query.email;
-        if(!email){
-            res.send([]);
-        }
-        const query = { email: email };
-        const result = await seatsCollection.find(query).toArray();
-        res.send(result)
-    })
 
-    app.post('/seats', async(req, res) => {
-        const item = req.body;
-        const result = await seatsCollection.insertOne(item);
-        res.send(result)
-    })
+        // instructors related apis
+        app.get('/instructors', async (req, res) => {
+            const result = await instructorsCollection.find().toArray();
+            res.send(result)
+        })
 
-    app.delete('/seats/:id', async (req, res) => {
-        const id = req.params.id;
-        const query = { _id: new ObjectId(id) };
-        const result = await seatsCollection.deleteOne(query);
-        res.send(result)
-      })
 
-    // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
-  } finally {
-    // Ensures that the client will close when you finish/error
-    // await client.close();
-  }
+        // seats collection apis
+        app.get('/seats', async (req, res) => {
+            const email = req.query.email;
+            if (!email) {
+                res.send([]);
+            }
+            const query = { email: email };
+            const result = await seatsCollection.find(query).toArray();
+            res.send(result)
+        })
+
+        app.post('/seats', async (req, res) => {
+            const item = req.body;
+            const result = await seatsCollection.insertOne(item);
+            res.send(result)
+        })
+
+        app.delete('/seats/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) };
+            const result = await seatsCollection.deleteOne(query);
+            res.send(result)
+        })
+
+        // Send a ping to confirm a successful connection
+        await client.db("admin").command({ ping: 1 });
+        console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    } finally {
+        // Ensures that the client will close when you finish/error
+        // await client.close();
+    }
 }
 run().catch(console.dir);
 
