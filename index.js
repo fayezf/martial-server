@@ -36,7 +36,7 @@ async function run() {
         const seatsCollection = client.db("martialDb").collection("seats");
 
         // users related apis
-        app.get('/users', async(req, res) => {
+        app.get('/users', async (req, res) => {
             const result = await usersCollection.find().toArray();
             res.send(result)
         });
@@ -53,16 +53,23 @@ async function run() {
             res.send(result)
         });
 
-        app.patch('/users/admin/:id', async(req, res) => {
+        app.patch('/users/admin/:id', async (req, res) => {
             const id = req.params.id;
-            const query = {_id: new ObjectId(id)};
+            const query = { _id: new ObjectId(id) };
             const updateDoc = {
                 $set: {
-                  role: 'admin'
+                    role: 'admin'
                 },
-              };
-              const result = await usersCollection.updateOne(query, updateDoc);
-              res.send(result)
+            };
+            const result = await usersCollection.updateOne(query, updateDoc);
+            res.send(result)
+        });
+
+        app.delete('/users/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: new ObjectId(id) };
+            const result = await usersCollection.deleteOne(filter);
+            res.send(result)
         })
 
 
