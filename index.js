@@ -4,6 +4,7 @@ const cors = require('cors');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
+const stripe = require('stripe')(process.env.PAYMENT_SECRET_KEY)
 const port = process.env.PORT || 5000;
 
 
@@ -51,6 +52,7 @@ async function run() {
         const classesCollection = client.db("martialDb").collection("classes");
         const instructorsCollection = client.db("martialDb").collection("instructors");
         const seatsCollection = client.db("martialDb").collection("seats");
+        const paymentsCollection = client.db("martialDb").collection("payments");
 
         app.post('/jwt', (req, res) => {
             const user = req.body;
@@ -135,12 +137,25 @@ async function run() {
             res.send(result);
         })
 
-        app.delete('/classes/:id', verifyJWT, verifyAdmin, async(req, res) => {
+        app.delete('/classes/:id', verifyJWT, verifyAdmin, async (req, res) => {
             const id = req.params.id;
-            const query = {_id: new ObjectId(id)};
+            const query = { _id: new ObjectId(id) };
             const result = await classesCollection.deleteOne(query);
             res.send(result)
         })
+
+        app.patch('/classes/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) };
+            const updateDoc = {
+                $set: {
+                    role: 'updated'
+                },
+            };
+            const result = await classesCollection.updateOne(query, updateDoc);
+            res.send(result)
+        });
+
 
 
         // instructors related apis
@@ -178,6 +193,32 @@ async function run() {
             const query = { _id: new ObjectId(id) };
             const result = await seatsCollection.deleteOne(query);
             res.send(result)
+        })
+
+        // create payment intent
+        app.post('/create-payment-intent', verifyJWT, async (req, res) => {
+            const { price } = req.body;
+            const amount = price * 100;
+            const paymentIntent = await stripe.paymentIntents.create({
+                amount: amount,
+                currency: 'usd',
+                payment_method_types: ['card']
+            });
+
+            res.send({
+                clientSecret: paymentIntent.client_secret
+            })
+        })
+
+        // payment related apis
+        app.post('/payments', verifyJWT, async (req, res) => {
+            const payment = req.body;
+            const insertResult = await paymentsCollection.insertOne(payment);
+
+            const query = { _id: { $in: payment.seatItems.map(id => new ObjectId(id)) } }
+            const deleteResult = await seatsCollection.deleteMany(query)
+
+            res.send({ insertResult, deleteResult })
         })
 
         // Send a ping to confirm a successful connection
