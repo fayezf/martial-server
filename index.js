@@ -211,6 +211,12 @@ async function run() {
         })
 
         // payment related apis
+        app.get('/payments/:email', verifyJWT, async(req, res) => {
+            const result = await paymentsCollection.find({email: req.params.email}).toArray();
+            res.send(result)
+        })
+
+
         app.post('/payments', verifyJWT, async (req, res) => {
             const payment = req.body;
             const insertResult = await paymentsCollection.insertOne(payment);
