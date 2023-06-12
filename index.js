@@ -151,14 +151,14 @@ async function run() {
             res.send(result)
         })
 
-        app.post('/classes', verifyJWT, async (req, res) => {
+        app.post('/classes', verifyJWT, verifyAdmin, async (req, res) => {
             const newClass = req.body;
             const result = await classesCollection.insertOne(newClass);
             res.send(result);
         })
 
 
-        app.get('/classes/:email', verifyJWT, async(req, res) => {
+        app.get('/classes/:email', verifyJWT, verifyAdmin, async(req, res) => {
             const result = await classesCollection.find({email: req.params.email}).toArray();
             res.send(result)
         })
