@@ -91,7 +91,7 @@ async function run() {
             res.send(result)
         });
 
-        // security layer: verifyJWT admin
+        // security layer: Admin
         app.get('/users/admin/:email', verifyJWT, async (req, res) => {
             const email = req.params.email;
 
@@ -151,10 +151,16 @@ async function run() {
             res.send(result)
         })
 
-        app.post('/classes', verifyJWT, verifyAdmin, async (req, res) => {
+        app.post('/classes', verifyJWT, async (req, res) => {
             const newClass = req.body;
             const result = await classesCollection.insertOne(newClass);
             res.send(result);
+        })
+
+
+        app.get('/classes/:email', verifyJWT, async(req, res) => {
+            const result = await classesCollection.find({email: req.params.email}).toArray();
+            res.send(result)
         })
 
         app.delete('/classes/:id', verifyJWT, verifyAdmin, async (req, res) => {
@@ -164,7 +170,7 @@ async function run() {
             res.send(result)
         })
 
-        app.patch('/classes/:id', async (req, res) => {
+        app.patch('/classes/:id', verifyJWT, verifyAdmin, async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) };
             const updateDoc = {
